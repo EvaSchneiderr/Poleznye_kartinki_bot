@@ -9,7 +9,8 @@ class BotDB:
         self.cursor = self.conn.cursor()
 
     def pic_availability(self, pic_numb):  # проверяем наличие рисунка
-        availability_result = self.cursor.execute(f"SELECT pic_availability FROM pics_for_sale WHERE pic_number={pic_numb}")
+        availability_result = self.cursor.execute(
+            f"SELECT pic_availability FROM pics_for_sale WHERE pic_number={pic_numb}")
         return availability_result.fetchone()
 
     def address_adding(self, pic_numb, address):
@@ -23,6 +24,11 @@ class BotDB:
     def client_name_telegram(self, chat_id, client_name_telegram):
         self.cursor.execute(
             f"UPDATE pics_for_sale SET client_name_telegram='{client_name_telegram}' WHERE client_chat_id={chat_id}")
+        self.conn.commit()
+
+    def client_name(self, chat_id, name):
+        self.cursor.execute(
+            f"UPDATE pics_for_sale SET client_name='{name}' WHERE client_chat_id={chat_id}")
         self.conn.commit()
 
     def availability_update(self, pic_number):
@@ -63,6 +69,74 @@ class BotDB:
         self.cursor.execute(
             f"UPDATE pics_for_sale SET status=5 WHERE client_chat_id={client_chat_id} and status=4")
         self.conn.commit()
+
+    # загрузка рисунка на продажу
+    def adding_client_pic(self, client_chat_id, client_nickname_telergam, file):  # client_nickname_telergam, message
+        self.cursor.execute(
+            f"INSERT INTO pics_to_receive (client_chat_id,client_nickname_telergam,status,pic) VALUES ('{client_chat_id}', '{client_nickname_telergam}',0, '{file}')")
+        self.conn.commit()
+
+    def client_name_receive(self, chat_id, name):
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET client_name='{name}' WHERE client_chat_id={chat_id}")
+        self.conn.commit()
+
+    def photo_pic_from_client_received(self):
+        photo_pic_from_client_received_ = self.cursor.execute(
+            "SELECT client_chat_id FROM pics_to_receive WHERE status=1")
+        return photo_pic_from_client_received_.fetchall()
+
+    def photo_pic_from_client_received_not_approve(self):
+        photo_pic_from_client_received_ = self.cursor.execute(
+            "SELECT client_chat_id FROM pics_to_receive WHERE status=10")
+        return photo_pic_from_client_received_.fetchall()
+
+    def update_photo_received_status(self, client_chat_id):
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET status=2 WHERE client_chat_id={client_chat_id} and status=1")
+        self.conn.commit()
+
+    def update_photo_received_status_not_approved(self, client_chat_id):
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET status=11 WHERE client_chat_id={client_chat_id} and status=10")
+        self.conn.commit()
+
+    def check_client_status_for_descr(self, client_chat_id):
+        client_status = self.cursor.execute(
+            f"SELECT status FROM pics_to_receive WHERE client_chat_id={client_chat_id}")
+        print(client_status)
+        return client_status.fetchone()[0]
+
+    def add_pic_info(self, client_chat_id, pic_info):
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET pic_info='{pic_info}' WHERE client_chat_id={client_chat_id} and status=2")
+        self.conn.commit()
+
+    def update_status_pic_sent(self, client_chat_id):
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET status=3 WHERE client_chat_id={client_chat_id} and status=2")
+        self.conn.commit()
+
+    def pic_received(self):
+        pic_received = self.cursor.execute(
+            f"SELECT client_chat_id FROM pics_to_receive WHERE status=4")
+        return pic_received.fetchall()
+
+    def update_status_pic_sent_received(self, client_chat_id):
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET status=5 WHERE client_chat_id={client_chat_id} and status=4")
+        self.conn.commit()
+
+    def pic_received_sold(self):
+        pic_received = self.cursor.execute(
+            f"SELECT client_chat_id FROM pics_to_receive WHERE status=6")
+        return pic_received.fetchall()
+
+    def update_status_pic_sent_received_sold(self, client_chat_id):
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET status=7 WHERE client_chat_id={client_chat_id} and status=6")
+        self.conn.commit()
+
 
     def close(self):  # закрываем соденинение
         self.conn.close()
