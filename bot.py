@@ -44,6 +44,7 @@ def welcome(message):
     bot.send_photo(message.chat.id, pic)
     bot.send_message(message.chat.id, greeting_text(message), parse_mode='html', reply_markup=markup)
 
+
 @bot.message_handler(content_types=['text'])
 def main_logic(message):
     if message.chat.type == 'private':
@@ -170,9 +171,8 @@ def bill_receive(message):  # пересылаем чек менеджеру
     user_name = message.from_user.username
     db.client_name_telegram(chat_id=message.chat.id, client_name_telegram=user_name)
 
-    user_name=message.from_user.full_name
+    user_name = message.from_user.full_name
     db.client_name(chat_id=message.chat.id, name=user_name)
-
 
     forward_chat = config.manager_id  # id менеджера
     bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
@@ -198,10 +198,10 @@ def pic_receive(message):  # пересылаем картинку менедж�
     forward_chat = config.manager_id  # id менеджера
     bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
 
-
     bot.send_message(message.chat.id,
                      str("Мы получили вашу картинку. Нам нужно время, чтобы принять решение. Мы вам обязательно сообщим о том, сможем ли мы взять ее в галерею."))
     db.adding_client_pic(message.chat.id, user_name, path)
+
 
 class BotThread(threading.Thread):
 
@@ -259,5 +259,11 @@ while True:
 
     for client_id in db.pic_received_sold():  # status=6
         client_chat_id = client_id[0]
-        bot.send_message(client_chat_id, 'Поздравляем вас и нас! Картинка «Горе» продана за 30 долларов и едет в Париж. Деньги пошли на помощь проекту «Адвита». Спасибо вам!')
+        pic_name = db.get_sold_pic_info1(client_chat_id)
+        pic_price = db.get_sold_pic_info2(client_chat_id)
+        location = db.get_sold_pic_info3(client_chat_id)
+        project_name = db.get_sold_pic_info4(client_chat_id)
+
+        bot.send_message(client_chat_id,
+                         f'Поздравляем вас и нас! Картинка "{pic_name[0]}" продана за {pic_price[0]} долларов и едет в {location[0]}. Деньги пошли на помощь проекту "{project_name[0]}". Спасибо вам!')
         db.update_status_pic_sent_received_sold(client_chat_id)

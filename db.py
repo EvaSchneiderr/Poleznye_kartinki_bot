@@ -137,6 +137,26 @@ class BotDB:
             f"UPDATE pics_to_receive SET status=7 WHERE client_chat_id={client_chat_id} and status=6")
         self.conn.commit()
 
+    def get_sold_pic_info1(self, client_chat_id):
+        pic_info_name = self.cursor.execute(
+            f"SELECT pic_name FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
+        return pic_info_name.fetchone()
+
+    def get_sold_pic_info2(self, client_chat_id):
+        pic_info_price = self.cursor.execute(
+            f"SELECT pic_price FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
+        return pic_info_price.fetchone()
+
+    def get_sold_pic_info3(self, client_chat_id):
+        pic_info_location = self.cursor.execute(
+            f"SELECT pic_location FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
+        return pic_info_location.fetchone()
+
+    def get_sold_pic_info4(self, client_chat_id):
+        pic_info_project = self.cursor.execute(
+            f"SELECT money_to_project FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
+        return pic_info_project.fetchone()
+
 
     def close(self):  # закрываем соденинение
         self.conn.close()
