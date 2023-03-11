@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="485038d2-9a53-4345-853b-92b62b336409" name="Changes" comment="bot 9 march">
+    <list default="true" id="485038d2-9a53-4345-853b-92b62b336409" name="Changes" comment="last message fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Poleznye_kartinki.db" beforeDir="false" afterPath="$PROJECT_DIR$/Poleznye_kartinki.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/db.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -95,11 +94,26 @@
       <option name="project" value="LOCAL" />
       <updated>1678373464981</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="last message fix">
+      <created>1678461465018</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1678461465018</updated>
+    </task>
+    <task id="LOCAL-00004" summary="last message fix">
+      <created>1678461480305</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1678461480305</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="bot 9 march" />
-    <option name="LAST_COMMIT_MESSAGE" value="bot 9 march" />
+    <MESSAGE value="last message fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="last message fix" />
   </component>
 </project>

@@ -71,9 +71,9 @@ class BotDB:
         self.conn.commit()
 
     # загрузка рисунка на продажу
-    def adding_client_pic(self, client_chat_id, client_nickname_telergam, file):  # client_nickname_telergam, message
+    def adding_client_pic(self, client_chat_id, client_nickname_telergam, client_name, file):
         self.cursor.execute(
-            f"INSERT INTO pics_to_receive (client_chat_id,client_nickname_telergam,status,pic) VALUES ('{client_chat_id}', '{client_nickname_telergam}',0, '{file}')")
+            f"INSERT INTO pics_to_receive (client_chat_id,client_nickname_telergam,client_name,pic) VALUES ('{client_chat_id}', '{client_nickname_telergam}','{client_name}', '{file}')")
         self.conn.commit()
 
     def client_name_receive(self, chat_id, name):
@@ -103,8 +103,7 @@ class BotDB:
 
     def check_client_status_for_descr(self, client_chat_id):
         client_status = self.cursor.execute(
-            f"SELECT status FROM pics_to_receive WHERE client_chat_id={client_chat_id}")
-        print(client_status)
+            f"SELECT status FROM pics_to_receive WHERE client_chat_id={client_chat_id} order by id desc")
         return client_status.fetchone()[0]
 
     def add_pic_info(self, client_chat_id, pic_info):
