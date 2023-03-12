@@ -61,7 +61,10 @@ def main_logic(message):
 
         elif message.text == 'Предложить ➡':
             bot.send_message(message.chat.id,
-                             str("Спасибо за желание! Сфотографируйте и загрузите картинку, чтобы мы поняли, сможем ли мы ее продать в пользу благотворительной организации."))
+                             str("Сфотографируйте работу и загрузите картинку в чат 📸"))
+
+            db.adding_client_pic1(message.chat.id)
+
         elif message.text == 'Галерея 🖼':
             bot.send_message(message.chat.id,
                              text="Наша <a href='https://instagram.com/helpfulpics.ru'>онлайн-галерея</a>",
@@ -76,7 +79,7 @@ def main_logic(message):
 
             if int(pic_availab[0]) == 0:  # рисунок в базе- его уже купили
                 bot.send_message(message.chat.id,
-                                 text="Упс! Картинку уже купили ☹️\n\n Не расстраивайтесь, <a href='https://instagram.com/helpfulpics.ru'> в галерее</a> много других замечательных картинок. Посмотрите, может вам что-то понравится.",
+                                 text="Упс! Картинку уже купили ☹️\n\nНе расстраивайтесь, <a href='https://instagram.com/helpfulpics.ru'> в галерее</a> много других замечательных картинок. Посмотрите, может вам что-то понравится.",
                                  parse_mode=ParseMode.HTML)
 
             else:  # рисунок в базе- его еще НЕ купили
@@ -109,8 +112,10 @@ def main_logic(message):
                              reply_markup=markup)
 
         elif db.check_client_status_for_descr(message.chat.id) == 2:
+            bot.send_message(message.chat.id,str("✅"))
+            time.sleep(1)
             bot.send_message(message.chat.id,
-                             str("Спасибо,это очень интресно и важно! Аккуратно упакуйте картинку в плотный конверт и отправьте по адресу (дальше адрес).Вы можете воспользоваться Почтой России. Как мы получим, мы обязательно сообщим."))
+                             str("Аккуратно упакуйте картинку в плотный конверт и отправьте нам (например, Почтой России).\nКому: Гусевой Валентине Владимировне \nКуда: 194356, Россия, Санкт-Петербург, ул. Композиторов, дом 4, кв 102\n\nМы обязательно сообщим вам о получении."))
             db.add_pic_info(message.chat.id, message.text)
             db.update_status_pic_sent(message.chat.id)
 
@@ -128,7 +133,7 @@ def count_delivery_price(call):
         markup.add(option1, option2, option3)
         bot.send_message(call.message.chat.id,
                          text="1. <a href='https://specopbabushka.ru/'>Спецоперация Бабушка</a> – лекарства, дрова и продукты для бабушек и дедушек из маленьких деревень \n2. <a href='https://justmint.ru/'>Благотворительная организация «Мята» </a> – образование и профориентация для детей в трудной жизненной ситуации\n3. <a href='http://svtvasilij.ru/'>Центр святителя Василия Великого </a> – помощь подросткам, нарушившим закон, найти свой путь в мире с собой и обществом",
-                         reply_markup=markup, parse_mode=ParseMode.HTML)
+                         reply_markup=markup, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
     # <a href='https://instagram.com/helpfulpics.ru'> в галерее</a>
     elif call.data == 'not_russia':
@@ -139,7 +144,7 @@ def count_delivery_price(call):
         markup.add(option1, option2, option3)
         bot.send_message(call.message.chat.id,
                          text=" 1. <a href='https://everybodycan.com.ua/'> Кожен може</a> - помогает детям, пожилым людям и медицинским учреждениям по всей Украине\n2. <a href='https://voices.org.ua/en'>Голоси Дiтей </a> - помощь пострадавшим от войны детям и их родителям.\n3. <a href='https://helpingtoleave.org/uk'>Помогаем уехать</a>- занимается эвакуацией людей из горячих точек",
-                         reply_markup=markup, parse_mode=ParseMode.HTML)
+                         reply_markup=markup, parse_mode=ParseMode.HTML,disable_web_page_preview=True)
 
 
 # @bot.callback_query_handler(func=lambda call: call.data == 'count' or call.data == 'buy')
@@ -185,41 +190,62 @@ def choosing_project(call):
     # str("Спасибо большое!🙏 Загрузите, пожалуйста, чек файлом, чтобы мы проверили перевод."))
 
 
-@bot.message_handler(content_types=['document'])
+# прием чека
+@bot.message_handler(content_types=['document', 'photo'])
 def bill_receive(message):  # пересылаем чек менеджеру
-    user_name = message.from_user.username
-    db.client_name_telegram(chat_id=message.chat.id, client_name_telegram=user_name)
+    if not db.checking_client_to_download_pic(message.chat.id):
+        user_name = message.from_user.username
+        db.client_name_telegram(chat_id=message.chat.id, client_name_telegram=user_name)
 
-    user_name = message.from_user.full_name
-    db.client_name(chat_id=message.chat.id, name=user_name)
+        user_name = message.from_user.full_name
+        db.client_name(chat_id=message.chat.id, name=user_name)
 
-    forward_chat = config.manager_id  # id менеджера
-    bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
-    bot.send_message(message.chat.id,
-                     str("Спасибо. Нам требуется немного времени на проверку. Как все получится, мы сразу напишем."))
-    picture_number = user_chosen_pic[message.chat.id]
-    db.availability_update(picture_number)
+        forward_chat = config.manager_id  # id менеджера
+        bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
+        bot.send_message(message.chat.id,
+                         str("Спасибо. Нам требуется немного времени на проверку. Как все получится, мы сразу напишем."))
+        picture_number = user_chosen_pic[message.chat.id]
+        db.availability_update(picture_number)
+    else:
+        user_name = message.from_user.username
+        user_full_name = message.from_user.full_name
+        db.client_name_receive(chat_id=message.chat.id, name=user_full_name)
+
+        raw = message.photo[0].file_id
+        path = raw + ".jpg"
+        file_info = bot.get_file(raw)
+        downloaded_file = bot.download_file(file_info.file_path)
+        with open(f'pics_received/{path}', 'wb') as new_file:
+            new_file.write(downloaded_file)
+
+        forward_chat = config.manager_id  # id менеджера
+        bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
+
+        bot.send_message(message.chat.id,
+                         str("Мы получили вашу работу. Нам нужно время, чтобы принять решение о том, сможем ли мы взять картинку в онлайн-галерею ⏳\n\nПодождите "))
+        db.adding_client_pic(message.chat.id, user_name, user_full_name, path)
 
 
-@bot.message_handler(content_types=['photo'])
-def pic_receive(message):  # пересылаем картинку менеджеру
-    user_name = message.from_user.username
-    user_full_name = message.from_user.full_name
-    db.client_name_receive(chat_id=message.chat.id, name=user_full_name)
+# прием картинки от клиента
+# @bot.message_handler(content_types=['photo'])
+# def pic_receive(message):  # пересылаем картинку менеджеру
+# user_name = message.from_user.username
+# user_full_name = message.from_user.full_name
+# db.client_name_receive(chat_id=message.chat.id, name=user_full_name)
 
-    raw = message.photo[2].file_id
-    path = raw + ".jpg"
-    file_info = bot.get_file(raw)
-    downloaded_file = bot.download_file(file_info.file_path)
-    with open(f'pics_received/{path}', 'wb') as new_file:
-        new_file.write(downloaded_file)
+# raw = message.photo[2].file_id
+# path = raw + ".jpg"
+# file_info = bot.get_file(raw)
+# downloaded_file = bot.download_file(file_info.file_path)
+# with open(f'pics_received/{path}', 'wb') as new_file:
+# new_file.write(downloaded_file)
 
-    forward_chat = config.manager_id  # id менеджера
-    bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
+# forward_chat = config.manager_id  # id менеджера
+# bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
 
-    bot.send_message(message.chat.id,
-                     str("Мы получили вашу картинку. Нам нужно время, чтобы принять решение. Мы вам обязательно сообщим о том, сможем ли мы взять ее в галерею."))
-    db.adding_client_pic(message.chat.id, user_name, user_full_name, path)
+# bot.send_message(message.chat.id,
+# str("Мы получили вашу картинку. Нам нужно время, чтобы принять решение. Мы вам обязательно сообщим о том, сможем ли мы взять ее в галерею."))
+# db.adding_client_pic(message.chat.id, user_name, user_full_name, path)
 
 
 class BotThread(threading.Thread):
@@ -253,7 +279,8 @@ while True:
 
     for client_id in db.envelop_devilered():  # status=4
         client_chat_id = client_id[0]
-        bot.send_message(client_chat_id,"Нам пришло уведомление, что вы получили письмо 📭\n\nНадеемся, работа вам понравилась. Спасибо за участие в добром деле!\n\nМы будем очень благодарны, если вы расскажете о проекте в социальных сетях. Возможно, кто-то из ваших друзей прямо сейчас ищет способ кому-нибудь помочь.")
+        bot.send_message(client_chat_id,
+                         "Нам пришло уведомление, что вы получили письмо 📭\n\nНадеемся, работа вам понравилась. Спасибо за участие в добром деле!\n\nМы будем очень благодарны, если вы расскажете о проекте в социальных сетях. Возможно, кто-то из ваших друзей прямо сейчас ищет способ кому-нибудь помочь.")
         db.finalise_purchase(client_chat_id)  # status=5
 
     # pic received
@@ -261,20 +288,22 @@ while True:
     for client_id in db.photo_pic_from_client_received():  # status=1
         client_chat_id = client_id[0]
         bot.send_message(client_chat_id,
-                         'Урааа! Работа – класс, мы берем ее в галерею.')
+                         'Вау! С радостью возьмем картинку в галерею.')
         db.update_photo_received_status(client_chat_id)  # status=2
+        time.sleep(2)
         bot.send_message(client_chat_id,
-                         'Нам нужно больше информации о картине (задать формат?):Название картинки– Имя художника – Возраст художникa – Размер картины – История о картинке (почему нарисована? как рисовалась?)')
+                         text="Чтобы рассказать о картинке <a href='https://instagram.com/helpfulpics.ru'>в инстаграме</a>, нам нужна следующая информация:\n1. Название\n2. Имя и возраст художника\n3. Размер работы (в см)\n4. Короткая история создания",
+                         parse_mode=ParseMode.HTML)
 
     for client_id in db.photo_pic_from_client_received_not_approve():  # status=10
         client_chat_id = client_id[0]
         bot.send_message(client_chat_id,
-                         'Картинка замечательная, но мы боимся, что не сможем ее продать. Спасибо большое, что нашли время!')
+                         'Спасибо за уделенное время. Картинка замечательная, но мы не возьмемся разместить ее в галерее, так как не уверены, что сможем ее продать.\n\nПопробуйте загрузить другую картинку.')
         db.update_photo_received_status_not_approved(client_chat_id)
 
     for client_id in db.pic_received():  # status=4
         client_chat_id = client_id[0]
-        bot.send_message(client_chat_id, 'Мы получили работу, скоро разместим ее в нашей галерее. Еще раз спасибо!')
+        bot.send_message(client_chat_id, text="Мы получили работу, скоро разместим ее <a href='https://instagram.com/helpfulpics.ru'>в онлайн-галерее</a>.\n Подпишитесь, чтобы не пропустить.",parse_mode=ParseMode.HTML)
         db.update_status_pic_sent_received(client_chat_id)
 
     for client_id in db.pic_received_sold():  # status=6
@@ -285,5 +314,7 @@ while True:
         project_name = db.get_sold_pic_info4(client_chat_id)
 
         bot.send_message(client_chat_id,
-                         f'Поздравляем вас и нас! Картинка "{pic_name[0]}" продана за {pic_price[0]} долларов и едет в {location[0]}. Деньги пошли на помощь проекту "{project_name[0]}". Спасибо вам!')
+                         f'🎉\n\nКартинка "{pic_name[0]}" продана за {pic_price[0]} долларов  и едет в {location[0]}. Деньги пошли на помощь подопечным организации "{project_name[0]}"!')
+        time.sleep(5)
+        bot.send_message(client_chat_id,"Мы будем очень благодарны, если вы расскажете о проекте в социальных сетях. Возможно, кто-то из ваших друзей прямо сейчас хочет кому-нибудь помочь.")
         db.update_status_pic_sent_received_sold(client_chat_id)

@@ -13,6 +13,18 @@ class BotDB:
             f"SELECT pic_availability FROM pics_for_sale WHERE pic_number={pic_numb}")
         return availability_result.fetchone()
 
+    def client_to_buy(self, chat_id):
+        client_status = self.cursor.execute(
+            f"SELECT status FROM pics_for_sale WHERE client_chat_id={chat_id} order by id desc")
+        return client_status.fetchone()[0]
+    def client_to_buy_pic_number(self, chat_id):
+        client_status = self.cursor.execute(
+            f"SELECT pic_number FROM pics_for_sale WHERE client_chat_id={chat_id} and status=0 order by id desc")
+        if client_status.fetchone()[0]!=0:
+            return True
+        else:
+            return False
+
     def address_adding(self, pic_numb, address):
         self.cursor.execute(f"UPDATE pics_for_sale SET client_address='{address}' WHERE pic_number={pic_numb}")
         self.conn.commit()
@@ -71,9 +83,27 @@ class BotDB:
         self.conn.commit()
 
     # загрузка рисунка на продажу
+    def adding_client_pic1(self, client_chat_id):
+        self.cursor.execute(
+            f"INSERT INTO pics_to_receive (client_chat_id,status) VALUES ('{client_chat_id}', '0')")
+        self.conn.commit()
+
+    def checking_client_to_download_pic(self,client_chat_id):
+        client_status = self.cursor.execute(
+            f"SELECT status FROM pics_to_receive WHERE client_chat_id={client_chat_id} order by id desc")
+        if client_status.fetchone()[0] == 0:
+            return True
+        else:
+            return False
+
     def adding_client_pic(self, client_chat_id, client_nickname_telergam, client_name, file):
         self.cursor.execute(
-            f"INSERT INTO pics_to_receive (client_chat_id,client_nickname_telergam,client_name,pic) VALUES ('{client_chat_id}', '{client_nickname_telergam}','{client_name}', '{file}')")
+            f"UPDATE pics_to_receive SET client_nickname_telergam='{client_nickname_telergam}' WHERE client_chat_id={client_chat_id}")
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET client_name='{client_name}' WHERE client_chat_id={client_chat_id}")
+        self.cursor.execute(
+            f"UPDATE pics_to_receive SET pic='{file}' WHERE client_chat_id={client_chat_id}")
+
         self.conn.commit()
 
     def client_name_receive(self, chat_id, name):
@@ -155,7 +185,6 @@ class BotDB:
         pic_info_project = self.cursor.execute(
             f"SELECT money_to_project FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
         return pic_info_project.fetchone()
-
 
     def close(self):  # закрываем соденинение
         self.conn.close()
