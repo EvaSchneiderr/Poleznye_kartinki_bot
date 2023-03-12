@@ -76,7 +76,7 @@ def main_logic(message):
 
             if int(pic_availab[0]) == 0:  # рисунок в базе- его уже купили
                 bot.send_message(message.chat.id,
-                                 text="Упс! Картинку уже купили ☹️\n\n Не расстраивайтесь, <a href='https://instagram.com/helpfulpics.ru'> в галерее</a> много других замечательных картинок. Посмотрите, может вам что-то понравится.",
+                                 text="Упс! Картинку уже купили ☹️\n\nНе расстраивайтесь, <a href='https://instagram.com/helpfulpics.ru'> в галерее</a> много других замечательных картинок. Посмотрите, может вам что-то понравится.",
                                  parse_mode=ParseMode.HTML)
 
             else:  # рисунок в базе- его еще НЕ купили
@@ -184,42 +184,61 @@ def choosing_project(call):
     # bot.send_message(call.message.chat.id,
     # str("Спасибо большое!🙏 Загрузите, пожалуйста, чек файлом, чтобы мы проверили перевод."))
 
-
-@bot.message_handler(content_types=['document'])
+#прием чека
+@bot.message_handler(content_types=['document','photo'])
 def bill_receive(message):  # пересылаем чек менеджеру
-    user_name = message.from_user.username
-    db.client_name_telegram(chat_id=message.chat.id, client_name_telegram=user_name)
+    if db.client_to_buy(message.chat.id)==0 and db.client_to_buy_pic_number(message.chat.id)!=0:
+        user_name = message.from_user.username
+        db.client_name_telegram(chat_id=message.chat.id, client_name_telegram=user_name)
 
-    user_name = message.from_user.full_name
-    db.client_name(chat_id=message.chat.id, name=user_name)
+        user_name = message.from_user.full_name
+        db.client_name(chat_id=message.chat.id, name=user_name)
 
-    forward_chat = config.manager_id  # id менеджера
-    bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
-    bot.send_message(message.chat.id,
-                     str("Спасибо. Нам требуется немного времени на проверку. Как все получится, мы сразу напишем."))
-    picture_number = user_chosen_pic[message.chat.id]
-    db.availability_update(picture_number)
+        forward_chat = config.manager_id  # id менеджера
+        bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
+        bot.send_message(message.chat.id,
+                         str("Спасибо. Нам требуется немного времени на проверку. Как все получится, мы сразу напишем."))
+        picture_number = user_chosen_pic[message.chat.id]
+        db.availability_update(picture_number)
+    else:
+        user_name = message.from_user.username
+        user_full_name = message.from_user.full_name
+        db.client_name_receive(chat_id=message.chat.id, name=user_full_name)
 
+        raw = message.photo[0].file_id
+        path = raw + ".jpg"
+        file_info = bot.get_file(raw)
+        downloaded_file = bot.download_file(file_info.file_path)
+        with open(f'pics_received/{path}', 'wb') as new_file:
+            new_file.write(downloaded_file)
 
-@bot.message_handler(content_types=['photo'])
-def pic_receive(message):  # пересылаем картинку менеджеру
-    user_name = message.from_user.username
-    user_full_name = message.from_user.full_name
-    db.client_name_receive(chat_id=message.chat.id, name=user_full_name)
+        forward_chat = config.manager_id  # id менеджера
+        bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
 
-    raw = message.photo[2].file_id
-    path = raw + ".jpg"
-    file_info = bot.get_file(raw)
-    downloaded_file = bot.download_file(file_info.file_path)
-    with open(f'pics_received/{path}', 'wb') as new_file:
-        new_file.write(downloaded_file)
+        bot.send_message(message.chat.id,
+                         str("Мы получили вашу картинку. Нам нужно время, чтобы принять решение. Мы вам обязательно сообщим о том, сможем ли мы взять ее в галерею."))
+        db.adding_client_pic(message.chat.id, user_name, user_full_name, path)
 
-    forward_chat = config.manager_id  # id менеджера
-    bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
+#прием картинки от клиента
+#@bot.message_handler(content_types=['photo'])
+#def pic_receive(message):  # пересылаем картинку менеджеру
+    #user_name = message.from_user.username
+    #user_full_name = message.from_user.full_name
+    #db.client_name_receive(chat_id=message.chat.id, name=user_full_name)
 
-    bot.send_message(message.chat.id,
-                     str("Мы получили вашу картинку. Нам нужно время, чтобы принять решение. Мы вам обязательно сообщим о том, сможем ли мы взять ее в галерею."))
-    db.adding_client_pic(message.chat.id, user_name, user_full_name, path)
+    #raw = message.photo[2].file_id
+    #path = raw + ".jpg"
+    #file_info = bot.get_file(raw)
+    #downloaded_file = bot.download_file(file_info.file_path)
+    #with open(f'pics_received/{path}', 'wb') as new_file:
+       # new_file.write(downloaded_file)
+
+    #forward_chat = config.manager_id  # id менеджера
+    #bot.forward_message(chat_id=forward_chat, from_chat_id=message.chat.id, message_id=message.id)
+
+    #bot.send_message(message.chat.id,
+                     #str("Мы получили вашу картинку. Нам нужно время, чтобы принять решение. Мы вам обязательно сообщим о том, сможем ли мы взять ее в галерею."))
+    #db.adding_client_pic(message.chat.id, user_name, user_full_name, path)
 
 
 class BotThread(threading.Thread):

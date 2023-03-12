@@ -13,6 +13,15 @@ class BotDB:
             f"SELECT pic_availability FROM pics_for_sale WHERE pic_number={pic_numb}")
         return availability_result.fetchone()
 
+    def client_to_buy(self, chat_id):
+        client_status = self.cursor.execute(
+            f"SELECT status FROM pics_for_sale WHERE client_chat_id={chat_id} order by id desc")
+        return client_status.fetchone()[0]
+    def client_to_buy_pic_number(self, chat_id):
+        client_status = self.cursor.execute(
+            f"SELECT pic_number FROM pics_for_sale WHERE client_chat_id={chat_id} and status=0 order by id desc")
+        return client_status.fetchone()[0]
+
     def address_adding(self, pic_numb, address):
         self.cursor.execute(f"UPDATE pics_for_sale SET client_address='{address}' WHERE pic_number={pic_numb}")
         self.conn.commit()
@@ -155,7 +164,6 @@ class BotDB:
         pic_info_project = self.cursor.execute(
             f"SELECT money_to_project FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
         return pic_info_project.fetchone()
-
 
     def close(self):  # закрываем соденинение
         self.conn.close()
