@@ -17,10 +17,11 @@ class BotDB:
         client_status = self.cursor.execute(
             f"SELECT status FROM pics_for_sale WHERE client_chat_id={chat_id} order by id desc")
         return client_status.fetchone()[0]
+
     def client_to_buy_pic_number(self, chat_id):
         client_status = self.cursor.execute(
             f"SELECT pic_number FROM pics_for_sale WHERE client_chat_id={chat_id} and status=0 order by id desc")
-        if client_status.fetchone()[0]!=0:
+        if client_status.fetchone()[0] != 0:
             return True
         else:
             return False
@@ -88,12 +89,15 @@ class BotDB:
             f"INSERT INTO pics_to_receive (client_chat_id,status) VALUES ('{client_chat_id}', '0')")
         self.conn.commit()
 
-    def checking_client_to_download_pic(self,client_chat_id):
-        client_status = self.cursor.execute(
-            f"SELECT status FROM pics_to_receive WHERE client_chat_id={client_chat_id} order by id desc")
-        if client_status.fetchone()[0] == 0:
-            return True
-        else:
+    def checking_client_to_download_pic(self, client_chat_id):
+        try:
+            client_status = self.cursor.execute(
+                f"SELECT status FROM pics_to_receive WHERE client_chat_id={client_chat_id} order by id desc")
+            if client_status.fetchone()[0] == 0:
+                return True
+            else:
+                return False
+        except:
             return False
 
     def adding_client_pic(self, client_chat_id, client_nickname_telergam, client_name, file):
@@ -128,7 +132,7 @@ class BotDB:
 
     def update_photo_received_status_not_approved(self, client_chat_id):
         self.cursor.execute(
-            f"UPDATE pics_to_receive SET status=11 WHERE client_chat_id={client_chat_id} and status=10")
+            f"UPDATE pics_to_receive SET status=0 WHERE client_chat_id={client_chat_id} and status=10")
         self.conn.commit()
 
     def check_client_status_for_descr(self, client_chat_id):

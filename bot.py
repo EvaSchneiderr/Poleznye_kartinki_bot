@@ -1,5 +1,5 @@
 import telebot
-from telegram.constants import ParseMode
+
 
 import config
 import time
@@ -43,10 +43,24 @@ def welcome(message):
 
     markup.add(button1, button2, button3, button4)
 
-    pic = open('/Users/evangelinaschnaider/Desktop/programming/IZO_BOT/logo.png', 'rb')
+    pic = open('logo.png', 'rb')
     bot.send_photo(message.chat.id, pic)
     bot.send_message(message.chat.id, greeting_text(message), parse_mode='html', reply_markup=markup)
 
+
+def get_address(message):
+    client_address = message.text
+    user_chat_id = message.chat.id
+    picture_number = user_chosen_pic[user_chat_id]
+    db.address_adding(picture_number, client_address)
+    db.client_chat_id(picture_number, user_chat_id)
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    option1 = types.InlineKeyboardButton('Россия 🇷🇺', callback_data='russia')
+    option2 = types.InlineKeyboardButton('Мир 🌎', callback_data='not_russia')
+    markup.add(option1, option2)
+    bot.send_message(message.chat.id,
+                     str("Отлично, адрес есть ✅\n\nПерейдем к выбору благотворительного проекта. Вы хотели бы перевести деньги в российский проект или тот, который осуществляет деятельность вне России?"),
+                     reply_markup=markup)
 
 @bot.message_handler(content_types=['text'])
 def main_logic(message):
@@ -57,7 +71,7 @@ def main_logic(message):
             time.sleep(3)
             bot.send_message(message.chat.id,
                              text="В <a href='https://instagram.com/helpfulpics.ru'>онлайн-галерее</a> у каждой картинки есть номер. Введите в чат номер той, которую вы хотите купить. Мы проверим, есть ли картинка в наличии.",
-                             parse_mode=ParseMode.HTML)
+                             parse_mode='HTML')
 
         elif message.text == 'Предложить ➡':
             bot.send_message(message.chat.id,
@@ -68,19 +82,19 @@ def main_logic(message):
         elif message.text == 'Галерея 🖼':
             bot.send_message(message.chat.id,
                              text="Наша <a href='https://instagram.com/helpfulpics.ru'>онлайн-галерея</a>",
-                             parse_mode=ParseMode.HTML)
+                             parse_mode='HTML')
         elif message.text == 'Поддержка 🙋‍♂️':
             bot.send_message(message.chat.id,
                              str("Перейдите, пожалуйста, в чат https://t.me/Eva_Schneider1 и отправьте свое сообщение поддержке."))
 
-        elif "," not in message.text and is_int(message.text) and 1 <= int(message.text) <= 100:
+        elif "," not in message.text and is_int(message.text) and 1 <= int(message.text) <= 200:
             picture_number = int(message.text)
             pic_availab = db.pic_availability(picture_number)  # проверяем есть ли рисунок в наличии
 
             if int(pic_availab[0]) == 0:  # рисунок в базе- его уже купили
                 bot.send_message(message.chat.id,
                                  text="Упс! Картинку уже купили ☹️\n\nНе расстраивайтесь, <a href='https://instagram.com/helpfulpics.ru'> в галерее</a> много других замечательных картинок. Посмотрите, может вам что-то понравится.",
-                                 parse_mode=ParseMode.HTML)
+                                 parse_mode='HTML')
 
             else:  # рисунок в базе- его еще НЕ купили
                 # markup = types.InlineKeyboardMarkup(row_width=2)
@@ -91,28 +105,29 @@ def main_logic(message):
                 bot.send_message(message.chat.id,
                                  text="Все на месте 🙂\n\nКартинки мы отправляем из Санкт-Петербурга за счет покупателя. Стоимость зависит от страны и города, размера и веса работы.\nВот тарифы отправки работы размера А4 в некоторые города:\n"
                                       "Москва – 153 руб\nЛондон – 273 руб\nБерлин – 313 руб\nНью-Йорк – 498 руб\nДубай – 518 руб\n\nТочную стоимость доставки вы можете рассчитать на сайте <a href='https://www.pochta.ru/letters'> Почты России.</a>",
-                                 parse_mode=ParseMode.HTML)
+                                 parse_mode='HTML')
 
                 time.sleep(5)
                 bot.send_message(message.chat.id,
                                  "Напишите адрес доставки картинки в формате «Индекс, Страна, Город, Улица, Номер дома, Квартира, ФИО получателя» 📨\n\nПример: 221 122, Великобритания, Лондон, Бейкер-стрит, 221Б, 3, Холмс Шерлок Петрович")
 
-        elif len((message.text).split(",")) > 3 and len((message.text).split(",")) < 12:
-            client_address = message.text
-            user_chat_id = message.chat.id
-            picture_number = user_chosen_pic[user_chat_id]
-            db.address_adding(picture_number, client_address)
-            db.client_chat_id(picture_number, user_chat_id)
-            markup = types.InlineKeyboardMarkup(row_width=2)
-            option1 = types.InlineKeyboardButton('Россия 🇷🇺', callback_data='russia')
-            option2 = types.InlineKeyboardButton('Мир 🌎', callback_data='not_russia')
-            markup.add(option1, option2)
-            bot.send_message(message.chat.id,
-                             str("Отлично, адрес есть ✅\n\nПерейдем к выбору благотворительного проекта. Вы хотели бы перевести деньги в российский проект или тот, который осуществляет деятельность вне России?"),
-                             reply_markup=markup)
+                bot.register_next_step_handler(message, get_address)
+        # elif len((message.text).split(",")) > 3 and len((message.text).split(",")) < 12:
+        # client_address = message.text
+        # user_chat_id = message.chat.id
+        # picture_number = user_chosen_pic[user_chat_id]
+        # db.address_adding(picture_number, client_address)
+        # db.client_chat_id(picture_number, user_chat_id)
+        # markup = types.InlineKeyboardMarkup(row_width=2)
+        # option1 = types.InlineKeyboardButton('Россия 🇷🇺', callback_data='russia')
+        # option2 = types.InlineKeyboardButton('Мир 🌎', callback_data='not_russia')
+        # markup.add(option1, option2)
+        # bot.send_message(message.chat.id,
+        # str("Отлично, адрес есть ✅\n\nПерейдем к выбору благотворительного проекта. Вы хотели бы перевести деньги в российский проект или тот, который осуществляет деятельность вне России?"),
+        # reply_markup=markup)
 
         elif db.check_client_status_for_descr(message.chat.id) == 2:
-            bot.send_message(message.chat.id,str("✅"))
+            bot.send_message(message.chat.id, str("✅"))
             time.sleep(1)
             bot.send_message(message.chat.id,
                              str("Аккуратно упакуйте картинку в плотный конверт и отправьте нам (например, Почтой России).\nКому: Гусевой Валентине Владимировне \nКуда: 194356, Россия, Санкт-Петербург, ул. Композиторов, дом 4, кв 102\n\nМы обязательно сообщим вам о получении."))
@@ -133,7 +148,7 @@ def count_delivery_price(call):
         markup.add(option1, option2, option3)
         bot.send_message(call.message.chat.id,
                          text="1. <a href='https://specopbabushka.ru/'>Спецоперация Бабушка</a> – лекарства, дрова и продукты для бабушек и дедушек из маленьких деревень \n2. <a href='https://justmint.ru/'>Благотворительная организация «Мята» </a> – образование и профориентация для детей в трудной жизненной ситуации\n3. <a href='http://svtvasilij.ru/'>Центр святителя Василия Великого </a> – помощь подросткам, нарушившим закон, найти свой путь в мире с собой и обществом",
-                         reply_markup=markup, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+                         reply_markup=markup, parse_mode='HTML', disable_web_page_preview=True)
 
     # <a href='https://instagram.com/helpfulpics.ru'> в галерее</a>
     elif call.data == 'not_russia':
@@ -144,7 +159,7 @@ def count_delivery_price(call):
         markup.add(option1, option2, option3)
         bot.send_message(call.message.chat.id,
                          text=" 1. <a href='https://everybodycan.com.ua/'> Кожен може</a> - помогает детям, пожилым людям и медицинским учреждениям по всей Украине\n2. <a href='https://voices.org.ua/en'>Голоси Дiтей </a> - помощь пострадавшим от войны детям и их родителям.\n3. <a href='https://helpingtoleave.org/uk'>Помогаем уехать</a>- занимается эвакуацией людей из горячих точек",
-                         reply_markup=markup, parse_mode=ParseMode.HTML,disable_web_page_preview=True)
+                         reply_markup=markup, parse_mode='HTML', disable_web_page_preview=True)
 
 
 # @bot.callback_query_handler(func=lambda call: call.data == 'count' or call.data == 'buy')
@@ -164,27 +179,27 @@ def choosing_project(call):
     if call.data == 'babyshka':
         bot.send_message(call.message.chat.id,
                          text="Вы решили помочь бабушкам и дедушкам 🙏\n\nПерейдите <a href='https://specopbabushka.ru/so_sbor/'>по ссылке</a> и перечислите «Спецоперации Бабушка» от 2000 руб. Фотографию или PDF чека отправьте в чат.",
-                         parse_mode=ParseMode.HTML)
+                         parse_mode='HTML')
     elif call.data == 'mint':
         bot.send_message(call.message.chat.id,
                          text=" Вы решили помочь детям в трудной жизненной ситуации 🙏\n\nПерейдите <a href='https://justmint.ru/help/'>по ссылке </a> и перечислите «Мяте» от 2000 руб. Фотографию или PDF чека отправьте в чат.",
-                         parse_mode=ParseMode.HTML)
+                         parse_mode='HTML')
     elif call.data == 'zentr':
         bot.send_message(call.message.chat.id,
                          text="Вы решили помочь подросткам, нарушившим закон 🙏\n\nПерейдите <a href='https://donate.svtvasilij.ru/'>по ссылке</a> и перечислите «Центру святителя Василия Великого» от 2000 руб. Фотографию или PDF чека отправьте в чат.",
-                         parse_mode=ParseMode.HTML)
+                         parse_mode='HTML')
     elif call.data == 'kojen_moje':
         bot.send_message(call.message.chat.id,
                          text="Вы решили помочь людям в Украине 🙏\n\nПерейдите <a href='https://everybodycan.com.ua/dopomogti-zaraz'>по ссылке</a> и перечислите организации «Кожен може» от 30$. Фотографию или PDF чека отправьте в чат.",
-                         parse_mode=ParseMode.HTML)
+                         parse_mode='HTML')
     elif call.data == 'golosi_ditey':
         bot.send_message(call.message.chat.id,
                          text="Вы решили помочь детям и их родителям, пострадавшим от войны 🙏\n\nПерейдите <a href='https://voices.org.ua/en/donat/'>по ссылке</a> и перечислите организации «Голоси Дiтей» от 30$. Фотографию или PDF чека отправьте в чат.",
-                         parse_mode=ParseMode.HTML)
+                         parse_mode='HTML')
     elif call.data == 'pomogaem_yehat':
         bot.send_message(call.message.chat.id,
                          text="Вы решили помочь с эвакуацией людей из горячих точек 🙏\n\nПерейдите <a href='https://helpingtoleave.org/uk#donate'>по ссылке</a> и перечислите организации «Помогаем уехать» от 30$. Фотографию или PDF чека отправьте в чат.",
-                         parse_mode=ParseMode.HTML)
+                         parse_mode='HTML')
 
     # bot.send_message(call.message.chat.id,
     # str("Спасибо большое!🙏 Загрузите, пожалуйста, чек файлом, чтобы мы проверили перевод."))
@@ -273,7 +288,7 @@ while True:
         track_number = client_id[1]
         bot.send_message(client_chat_id,
                          text=f"Письмо отправлено. Вот ваш трек номер: {track_number}. По нему <a href='https://www.pochta.ru/tracking'>на сайте Почты России</a> вы можете отслеживать местонахождение конверта.\n\nОриентировочное время доставки – 30 дней 💌",
-                         parse_mode=ParseMode.HTML)
+                         parse_mode='HTML')
 
         db.update_envelope_status(client_chat_id)  # status=3
 
@@ -293,7 +308,7 @@ while True:
         time.sleep(2)
         bot.send_message(client_chat_id,
                          text="Чтобы рассказать о картинке <a href='https://instagram.com/helpfulpics.ru'>в инстаграме</a>, нам нужна следующая информация:\n1. Название\n2. Имя и возраст художника\n3. Размер работы (в см)\n4. Короткая история создания",
-                         parse_mode=ParseMode.HTML)
+                         parse_mode='HTML')
 
     for client_id in db.photo_pic_from_client_received_not_approve():  # status=10
         client_chat_id = client_id[0]
@@ -303,7 +318,9 @@ while True:
 
     for client_id in db.pic_received():  # status=4
         client_chat_id = client_id[0]
-        bot.send_message(client_chat_id, text="Мы получили работу, скоро разместим ее <a href='https://instagram.com/helpfulpics.ru'>в онлайн-галерее</a>.\n Подпишитесь, чтобы не пропустить.",parse_mode=ParseMode.HTML)
+        bot.send_message(client_chat_id,
+                         text="Мы получили работу, скоро разместим ее <a href='https://instagram.com/helpfulpics.ru'>в онлайн-галерее</a>.\n Подпишитесь, чтобы не пропустить.",
+                         parse_mode='HTML')
         db.update_status_pic_sent_received(client_chat_id)
 
     for client_id in db.pic_received_sold():  # status=6
@@ -316,5 +333,6 @@ while True:
         bot.send_message(client_chat_id,
                          f'🎉\n\nКартинка "{pic_name[0]}" продана за {pic_price[0]} долларов  и едет в {location[0]}. Деньги пошли на помощь подопечным организации "{project_name[0]}"!')
         time.sleep(5)
-        bot.send_message(client_chat_id,"Мы будем очень благодарны, если вы расскажете о проекте в социальных сетях. Возможно, кто-то из ваших друзей прямо сейчас хочет кому-нибудь помочь.")
+        bot.send_message(client_chat_id,
+                         "Мы будем очень благодарны, если вы расскажете о проекте в социальных сетях. Возможно, кто-то из ваших друзей прямо сейчас хочет кому-нибудь помочь.")
         db.update_status_pic_sent_received_sold(client_chat_id)
