@@ -1,5 +1,6 @@
 import pymysql
 import pymysql.cursors
+from sshtunnel import SSHTunnelForwarder
 
 
 # db_file="/Users/evangelinaschnaider/Desktop/programming/IZO_BOT/Poleznye_kartinki.db"
@@ -7,12 +8,13 @@ class BotDB:
 
     def __init__(self):  # открываем подключение
         self.conn = pymysql.connect(
-            host='EvaSchneider.mysql.pythonanywhere-services.com',
+            host='127.0.0.1',
             user='EvaSchneider',
             password='PoleznyeKartinki',
             database='EvaSchneider$default',
             cursorclass=pymysql.cursors.DictCursor
         )
+
         self.cursor = self.conn.cursor()
 
     def pic_availability(self, pic_numb):  # проверяем наличие рисунка
@@ -192,3 +194,4 @@ class BotDB:
 
     def close(self):  # закрываем соденинение
         self.conn.close()
+        self.tunnel.close()

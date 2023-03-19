@@ -10,7 +10,7 @@ import threading
 bot = telebot.TeleBot(config.TOKEN)
 bot_name = bot.get_me().first_name
 db_file = config.db_file
-db = BotDB(db_file=db_file)
+db = BotDB()
 user_chosen_pic = dict()
 
 
