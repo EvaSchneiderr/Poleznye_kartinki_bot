@@ -1,6 +1,5 @@
 import telebot
 
-
 import config
 import time
 
@@ -61,6 +60,7 @@ def get_address(message):
     bot.send_message(message.chat.id,
                      str("Отлично, адрес есть ✅\n\nПерейдем к выбору благотворительного проекта. Вы хотели бы перевести деньги в российский проект или тот, который осуществляет деятельность вне России?"),
                      reply_markup=markup)
+
 
 @bot.message_handler(content_types=['text'])
 def main_logic(message):

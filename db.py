@@ -1,27 +1,34 @@
-import sqlite3
+import pymysql
+import pymysql.cursors
 
 
 # db_file="/Users/evangelinaschnaider/Desktop/programming/IZO_BOT/Poleznye_kartinki.db"
 class BotDB:
 
-    def __init__(self, db_file):  # открываем подключение
-        self.conn = sqlite3.connect(db_file, check_same_thread=False)
+    def __init__(self):  # открываем подключение
+        self.conn = pymysql.connect(
+            host='EvaSchneider.mysql.pythonanywhere-services.com',
+            user='EvaSchneider',
+            password='PoleznyeKartinki',
+            database='EvaSchneider$default',
+            cursorclass=pymysql.cursors.DictCursor
+        )
         self.cursor = self.conn.cursor()
 
     def pic_availability(self, pic_numb):  # проверяем наличие рисунка
-        availability_result = self.cursor.execute(
-            f"SELECT pic_availability FROM pics_for_sale WHERE pic_number={pic_numb}")
-        return availability_result.fetchone()
+        self.cursor.execute(f"SELECT pic_availability FROM pics_for_sale WHERE pic_number={pic_numb}")
+        return self.cursor.fetchone()
 
     def client_to_buy(self, chat_id):
-        client_status = self.cursor.execute(
-            f"SELECT status FROM pics_for_sale WHERE client_chat_id={chat_id} order by id desc")
-        return client_status.fetchone()[0]
+        self.cursor.execute(f"SELECT status FROM pics_for_sale WHERE client_chat_id={chat_id} order by id desc")
+        return self.cursor.fetchone()[0]
 
     def client_to_buy_pic_number(self, chat_id):
-        client_status = self.cursor.execute(
-            f"SELECT pic_number FROM pics_for_sale WHERE client_chat_id={chat_id} and status=0 order by id desc")
-        if client_status.fetchone()[0] != 0:
+        self.cursor.execute(
+            f"SELECT pic_number FROM pics_for_sale WHERE client_chat_id={chat_id} and status=0 order by id desc"
+        )
+        client_status = self.cursor.fetchone()[0]
+        if client_status != 0:
             return True
         else:
             return False
@@ -49,9 +56,8 @@ class BotDB:
         self.conn.commit()
 
     def bill_approved_client_ids(self):
-        bill_sent = self.cursor.execute(
-            "SELECT client_chat_id FROM pics_for_sale WHERE status=1")
-        return bill_sent.fetchall()
+        self.cursor.execute("SELECT client_chat_id FROM pics_for_sale WHERE status=1")
+        return self.cursor.fetchall()
 
     def update_bill_sent_status(self, client_chat_id):
         self.cursor.execute(
@@ -64,9 +70,9 @@ class BotDB:
         self.conn.commit()
 
     def track_number(self):
-        bill_sent = self.cursor.execute(
+        self.cursor.execute(
             f"SELECT client_chat_id, track_number FROM pics_for_sale WHERE status=2 and track_number!='no'")
-        return bill_sent.fetchall()
+        return self.cursor.fetchall()
 
     def update_envelope_status(self, client_chat_id):
         self.cursor.execute(
@@ -74,9 +80,8 @@ class BotDB:
         self.conn.commit()
 
     def envelop_devilered(self):
-        bill_sent = self.cursor.execute(
-            f"SELECT client_chat_id FROM pics_for_sale WHERE status=4")
-        return bill_sent.fetchall()
+        self.cursor.execute(f"SELECT client_chat_id FROM pics_for_sale WHERE status=4")
+        return self.cursor.fetchall()
 
     def finalise_purchase(self, client_chat_id):
         self.cursor.execute(
@@ -91,9 +96,9 @@ class BotDB:
 
     def checking_client_to_download_pic(self, client_chat_id):
         try:
-            client_status = self.cursor.execute(
+            self.cursor.execute(
                 f"SELECT status FROM pics_to_receive WHERE client_chat_id={client_chat_id} order by id desc")
-            if client_status.fetchone()[0] == 0:
+            if self.cursor.fetchone()[0] == 0:
                 return True
             else:
                 return False
@@ -116,14 +121,12 @@ class BotDB:
         self.conn.commit()
 
     def photo_pic_from_client_received(self):
-        photo_pic_from_client_received_ = self.cursor.execute(
-            "SELECT client_chat_id FROM pics_to_receive WHERE status=1")
-        return photo_pic_from_client_received_.fetchall()
+        self.cursor.execute("SELECT client_chat_id FROM pics_to_receive WHERE status=1")
+        return self.cursor.fetchall()
 
     def photo_pic_from_client_received_not_approve(self):
-        photo_pic_from_client_received_ = self.cursor.execute(
-            "SELECT client_chat_id FROM pics_to_receive WHERE status=10")
-        return photo_pic_from_client_received_.fetchall()
+        self.cursor.execute("SELECT client_chat_id FROM pics_to_receive WHERE status=10")
+        return self.cursor.fetchall()
 
     def update_photo_received_status(self, client_chat_id):
         self.cursor.execute(
@@ -136,9 +139,9 @@ class BotDB:
         self.conn.commit()
 
     def check_client_status_for_descr(self, client_chat_id):
-        client_status = self.cursor.execute(
+        self.cursor.execute(
             f"SELECT status FROM pics_to_receive WHERE client_chat_id={client_chat_id} order by id desc")
-        return client_status.fetchone()[0]
+        return self.cursor.fetchone()[0]
 
     def add_pic_info(self, client_chat_id, pic_info):
         self.cursor.execute(
@@ -151,9 +154,8 @@ class BotDB:
         self.conn.commit()
 
     def pic_received(self):
-        pic_received = self.cursor.execute(
-            f"SELECT client_chat_id FROM pics_to_receive WHERE status=4")
-        return pic_received.fetchall()
+        self.cursor.execute(f"SELECT client_chat_id FROM pics_to_receive WHERE status=4")
+        return self.cursor.fetchall()
 
     def update_status_pic_sent_received(self, client_chat_id):
         self.cursor.execute(
@@ -161,9 +163,8 @@ class BotDB:
         self.conn.commit()
 
     def pic_received_sold(self):
-        pic_received = self.cursor.execute(
-            f"SELECT client_chat_id FROM pics_to_receive WHERE status=6")
-        return pic_received.fetchall()
+        self.cursor.execute(f"SELECT client_chat_id FROM pics_to_receive WHERE status=6")
+        return self.cursor.fetchall()
 
     def update_status_pic_sent_received_sold(self, client_chat_id):
         self.cursor.execute(
@@ -171,24 +172,23 @@ class BotDB:
         self.conn.commit()
 
     def get_sold_pic_info1(self, client_chat_id):
-        pic_info_name = self.cursor.execute(
-            f"SELECT pic_name FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
-        return pic_info_name.fetchone()
+        self.cursor.execute(f"SELECT pic_name FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
+        return self.cursor.fetchone()
 
     def get_sold_pic_info2(self, client_chat_id):
-        pic_info_price = self.cursor.execute(
+        self.cursor.execute(
             f"SELECT pic_price FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
-        return pic_info_price.fetchone()
+        return self.cursor.fetchone()
 
     def get_sold_pic_info3(self, client_chat_id):
-        pic_info_location = self.cursor.execute(
+        self.cursor.execute(
             f"SELECT pic_location FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
-        return pic_info_location.fetchone()
+        return self.cursor.fetchone()
 
     def get_sold_pic_info4(self, client_chat_id):
-        pic_info_project = self.cursor.execute(
+        self.cursor.execute(
             f"SELECT money_to_project FROM pics_to_receive WHERE client_chat_id={client_chat_id} and status=6")
-        return pic_info_project.fetchone()
+        return self.cursor.fetchone()
 
     def close(self):  # закрываем соденинение
         self.conn.close()
